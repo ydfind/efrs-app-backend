@@ -4,9 +4,11 @@ import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -263,6 +265,36 @@ public class FileUtil {
         }
         return retList;
     }
-
-
+    
+    /**
+     * 文件夹中查找后缀sufix的文件集合
+     */
+    public static ArrayList<String> getFilesEndWith(String filepath, String endStr) {
+        ArrayList<String> retList = new ArrayList<String>();
+        File f = new File(filepath);
+        String[] filenames = f.list(getFileExtensionFilter(endStr));
+        for(int i = 0; i < filenames.length; i++){
+        	retList.add(filenames[i]);
+        }
+        return retList;
+    }
+    
+    private static FilenameFilter getFileExtensionFilter(String endStr){
+    	final String finalEndStr = endStr;
+    	return new FilenameFilter(){
+    		public boolean accept(File file, String name){
+    			boolean ret = name.endsWith(finalEndStr);
+    			return ret;
+    		}
+    	};
+    }
+    
+//    private static FileFilter getNotDirFileFilter(){
+//    	return new FileFilter(){
+//    		public boolean accept(File file){
+//    			return file.isDirectory();
+//    		}
+//    	};
+//    }
+//    
 }

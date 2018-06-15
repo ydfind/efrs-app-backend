@@ -21,7 +21,7 @@ public class ExceptionHandle {
         if(e instanceof UDException){
             return ResultUtils.fail(((UDException) e).getCode(),e.getMessage());
         }else{
-            logger.error("系统错误：{}",e);
+            logger.error("系统错误：{}" + e.toString(), e);
 //            return ResultUtils.fail(ResultCodeEnums.UNKNOWN_ERROR.getCode(),ResultCodeEnums.UNKNOWN_ERROR.getMsg());
             return ResultUtils.fail(ResultCodeEnums.UNKNOWN_ERROR.getCode(),e.getMessage());
         }

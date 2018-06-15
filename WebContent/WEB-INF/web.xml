@@ -13,10 +13,13 @@
     <servlet-name>efrsapp</servlet-name>
     <url-pattern>*.do</url-pattern>
   </servlet-mapping>
-	<servlet-mapping>
+  <servlet-mapping>
     <servlet-name>efrsapp</servlet-name>
     <url-pattern>/v2/api-docs</url-pattern>
-	</servlet-mapping>
+  </servlet-mapping>
+  <listener>
+    <listener-class>com.icbc.efrs.app.prop.AppServerProp</listener-class>
+  </listener>
   <filter>
     <filter-name>encodingFilter</filter-name>
     <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
