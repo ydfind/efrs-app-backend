@@ -60,4 +60,4 @@ fastlane/screenshots
 .settings/*
 build/*
 WebContent/json/*
-WebContent/WEB-INF/lib/*
+# WebContent/WEB-INF/lib/*
