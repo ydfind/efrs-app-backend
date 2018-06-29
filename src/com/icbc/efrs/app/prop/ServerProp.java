@@ -6,8 +6,11 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
 import com.icbc.efrs.app.service.ExceptionService;
-
-public class AppServerProp implements ServletContextListener {
+/**
+ * 服务器配置类
+ *
+ */
+public class ServerProp implements ServletContextListener {
 	private static String appServerPath;
 	public static String getAppServerName(){
 		return "efrsapp";
@@ -15,6 +18,10 @@ public class AppServerProp implements ServletContextListener {
 	
 	public static String getAppServerPath(){
 		return appServerPath;		
+	}
+	
+	public static String getGlobalDateFormatStr(){
+		return "yyyyMMddHHmmssSSS";
 	}
 
 	@Override

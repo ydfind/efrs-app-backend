@@ -6,33 +6,48 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.parser.Feature;
+import com.icbc.efrs.app.aspect.LoggerAspect;
+import com.icbc.efrs.app.domain.BaseServerReqEntity;
+import com.icbc.efrs.app.domain.TransFileEntity;
+import com.icbc.efrs.app.enums.ReqIntfEnums;
 import com.icbc.efrs.app.utils.FileUtil;
-
+/**
+ * 负责向PC发请求
+ *
+ */
 public class PCPostService {
-	// 直接test
 	
-	private static void request1() throws Exception {
-		// 组织输入参数
-//		String paramStr = "{\"ver\":\"2\",\"userId\":\"001100806\",\"bankId\":\"8B94459B9F1D4ECD\",\"type\":\"3\",\"source\":\"2\",\"language\":\"zh_CN\",\"ip\":\"84.232.45.110\",\"time\":\"20180102095024140\",\"data\":{\"accNo\":\"广州市堡利皮具有限公司3255\"}}";
-		String paramStr = "[" + FileUtil.getContent("D:/6.json") + "]";
-//		String paramJson = JSON.toJSONString(new Object[] { paramStr});//注意这里必须json
-		// 服务URL：path/服务名/版本/方法
-//		String url = "http://122.26.13.159:16257/icbc/cocoa/json/com.icbc.efrs.dsf.compositeservice.MajorService/1.0/getMajorService";
-		String url = "http://122.26.13.145:16257/icbc/cocoa/json/com.icbc.efrs.dsf.service.FahaiService/1.0/getFahai";
-		// 发起一次http调用
-//		String outJson = callHttpService(url, paramJson);
-		paramStr = paramStr.replace("%key%", "中国工商银行");
-		String outJson = callHttpService(url, paramStr);
-		if(outJson == null){
-			System.out.println("获取接口失败");
+	private static JSONObject getResultJson(String result, boolean needparse){
+		JSONObject obj = null;
+		if(result != null){
+			if(needparse){
+				result = BaseResultService.jsonParse(result);	
+			}
+			obj = JSON.parseObject(result, Feature.OrderedField);
 		}else{
-			System.out.println(outJson);
+			System.out.println("----PC端返回的结果为null，请求失败：getResultJson");
 		}
+		return obj;
 	}
 
+	/**
+	 * 向PC发起请求，并返回结果
+	 * @param url post的地址
+	 * @param paramJson post的内容
+	 * @return 请求PC得到的结果：string类型
+	 */
 	public static String callHttpService(String url, String paramJson) {
+		System.out.println("请求的url：" + url);
+		System.out.println("请求的json为：" + paramJson);
 		String retStr = null;
 		int returnCode = 0;
 		int timeOut = 5000;
@@ -103,5 +118,78 @@ public class PCPostService {
 			}
 		}
 		return retStr;
+	}
+
+	/**
+	 * 向PC发起请求，并返回结果
+	 * @param url post的地址
+	 * @param paramJson post的内容
+	 * @return 请求PC得到的结果：JSONObject类型
+	 */
+	public static JSONObject getHttpServiceJson(String url, String paramJson) {
+		JSONObject obj = null;
+		String result = callHttpService(url, paramJson);
+		obj = getResultJson(result, true);
+		return obj;
+	}
+
+	/**
+	 * 同一url在第一次请求失败后，不再发起请求，默认失败；
+	 * 同一请求内容只向PC发送一次；
+	 * @param serverReqs 向PC发起的请求集合
+	 * @return 向PC发起的请求的结果集合
+	 */
+	public static ArrayList<String> getPCResultStrs(ArrayList<String> urls, ArrayList<String> paramJsons){
+		// url和paramJson的数量需一致
+		if(urls == null || paramJsons == null || urls.size() != paramJsons.size()){
+			return null;
+		}
+		ArrayList<String> pcResults = new ArrayList<String>();
+		ArrayList<String> failedUrls = new ArrayList<String>();
+		Map<String, Integer> actualReqs = new HashMap<String, Integer>();
+		for(int i = 0; i < urls.size(); i++){
+			String url = urls.get(i);
+			String paramJson = paramJsons.get(i);
+			String pcResult = "";
+			if(url != null && paramJson != null && !url.equals("") && !paramJson.equals("")){
+				String reqKey = url + "#" + paramJson;// 请求唯一标志
+				if(actualReqs.containsKey(reqKey)){
+					int matchKey = actualReqs.get(reqKey);
+					// 校验
+					if(matchKey >= pcResults.size() || matchKey < 0){
+						ExceptionService.throwCodeException("无法找到相似请求数据");
+					}
+					pcResult = pcResults.get(matchKey);
+				}else if(!failedUrls.contains(url)){// 同一地址请求失败后，后续请求默认都是失败
+					// 重新发送请求
+		    		pcResult = callHttpService(url, paramJson);
+				    if(pcResult == null){
+				    	failedUrls.add(url);// 该url下次不再查询
+				    	pcResult = "";
+				    }
+				    actualReqs.put(reqKey, i);	
+				}
+			}
+			pcResults.add(pcResult);
+		}
+		return pcResults;
+	}
+
+	/**
+	 * 同一url在第一次请求失败后，不再发起请求，默认失败；
+	 * 同一请求内容只向PC发送一次；
+	 * @param serverReqs 向PC发起的请求集合
+	 * @return 向PC发起的请求的结果集合
+	 */
+	public static ArrayList<JSONObject> getPCResultJsons(ArrayList<String> urls, ArrayList<String> paramJsons){
+		ArrayList<String> strs = getPCResultStrs(urls, paramJsons);
+		if(strs == null){
+			return null;
+		}
+		ArrayList<JSONObject> jsons = new ArrayList<JSONObject>();
+		for(int i = 0; i < strs.size(); i++){
+			jsons.add(getResultJson(strs.get(i), true));	
+		}
+		return jsons;
 	}
 }

@@ -4,14 +4,27 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.parser.Feature;
+import com.icbc.efrs.app.domain.BaseAppReqEntity;
+import com.icbc.efrs.app.domain.BaseAppResultEntity;
 import com.icbc.efrs.app.domain.ReqJsonFileEntity;
 import com.icbc.efrs.app.domain.TransFileEntity;
+import com.icbc.efrs.app.service.BaseReqService;
+import com.icbc.efrs.app.service.BaseResultService;
 import com.icbc.efrs.app.service.ExceptionService;
+import com.icbc.efrs.app.service.PCPostService;
 import com.icbc.efrs.app.utils.FileUtil;
-
+/**
+ * 翻译json配置文件
+ *
+ */
 public class TransFilesProp {
 	private static final String cfgName = "json/";
 	private static final String endStr = "apptrans";
+	private static final String fxFilename = "FengXianTransReq.json";
+	private static final String fxKeyname = "fengxian";
 	private static Map<String, TransFileEntity> fileMap;
 	
 	static{
@@ -25,10 +38,19 @@ public class TransFilesProp {
 		
 		for(int i = 0; i < filenames.size(); i++){
 			addFile(filenames.get(i));
-//			TransFileEntity objFile = new TransFileEntity(getPath() + filenames.get(i));
-//			System.out.println("-----------翻译文件名称：" + filenames.get(i));
-//			String reqKey = objFile.getReqKey();
-//			fileMap.put(reqKey, objFile);
+		}
+		initFXTrans();
+	}
+	
+	private static void initFXTrans(){
+		String fxPath = getPath() + fxFilename;
+		String content = FileUtil.getContent(fxPath);
+		JSONObject obj = PCPostService.getHttpServiceJson(PCServerUrlsProp.getFengXianTransUrl(), content);
+		if(obj != null){
+			TransFileEntity objFile = new TransFileEntity(obj);
+			fileMap.put(fxKeyname, objFile);
+		}else{
+			System.out.println("----获取接口失败：initFXTrans");
 		}
 	}
 	
@@ -40,7 +62,7 @@ public class TransFilesProp {
 	}
 	
 	public static String getPath(){
-		String dir = AppServerProp.getAppServerPath() + cfgName;
+		String dir = ServerProp.getAppServerPath() + cfgName;
 		return dir;
 	}
 
@@ -55,5 +77,17 @@ public class TransFilesProp {
 			ExceptionService.throwCodeException("无法找到请求对应的翻译配置文件");
 			return null;
 		}
+	}
+	
+	public static TransFileEntity getFXTransFileEntity(BaseAppResultEntity appResult, BaseAppReqEntity appReq){
+		TransFileEntity objFile = null;
+		String fxPath = getPath() + fxFilename;
+		String content = FileUtil.getContent(fxPath);
+		JSONObject obj = BaseReqService.getFXTransPCResultJson(appResult, appReq, content);
+		if(obj != null){
+			objFile = new TransFileEntity(obj);
+		}
+		return objFile;
+		
 	}
 }

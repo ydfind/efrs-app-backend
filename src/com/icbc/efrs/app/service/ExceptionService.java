@@ -1,7 +1,10 @@
 package com.icbc.efrs.app.service;
 
 import com.icbc.efrs.app.exception.CodeException;
-
+/**
+ * 程序运行时与约定不符的报错处理
+ *
+ */
 public class ExceptionService {
 	public static void throwCodeException(String errStr){
 		try{

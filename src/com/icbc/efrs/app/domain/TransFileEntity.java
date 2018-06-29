@@ -9,24 +9,31 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.icbc.efrs.app.enums.ReqIntfEnums;
-import com.icbc.efrs.app.prop.AppServerProp;
+import com.icbc.efrs.app.prop.ServerProp;
 import com.icbc.efrs.app.service.ExceptionService;
 import com.icbc.efrs.app.utils.FileUtil;
-
+/*
+ * App请求结果翻译对应的file文件类
+ */
 public class TransFileEntity {
 	private static String splitStr = "-";
 	private String filename;// 文件名称
-	private ReqIntfEnums reqType;
+//	private ReqIntfEnums reqType;
 	private Map<String, String> keyMap;
 	private String reqKey;  // 请求的key
 	
 	public TransFileEntity(String filename){
 		this.filename = filename;
 		init();
+	}
+	
+	public TransFileEntity(JSONObject jsonObject){
+		keyMap = getJsonKeyMapByJson(jsonObject);
 	}
 	
 	public void init(){
@@ -41,16 +48,16 @@ public class TransFileEntity {
 				throw new Exception("解析错误");
 			// 请求的关键字
 			reqKey = strs[0];
-			// 请求的接口类型
-			int reqTypeId = Integer.parseInt(strs[1]);
-			for(ReqIntfEnums e: ReqIntfEnums.values())
-				if(e.getID() == reqTypeId){
-					setReqType(e);
-					break;
-				}
-			if(getReqType() == ReqIntfEnums.ErrIntf){
-				throw new Exception("解析错误");
-			}
+//			// 请求的接口类型
+//			int reqTypeId = Integer.parseInt(strs[1]);
+//			for(ReqIntfEnums e: ReqIntfEnums.values())
+//				if(e.getID() == reqTypeId){
+//					setReqType(e);
+//					break;
+//				}
+//			if(getReqType() == ReqIntfEnums.ErrIntf){
+//				throw new Exception("解析错误");
+//			}
 			
 		}catch(Exception e){
 			System.out.println("错误的翻译文件名：" + filename);
@@ -86,6 +93,10 @@ public class TransFileEntity {
 	            System.out.println("line " + line + ": " + tempString);
 	            if (!tempString.startsWith("#") && (tempString.indexOf("=") > 0)) {
 	                String[] strArray = tempString.split("=");
+	                if(strArray.length != 3 ||strArray[0].equalsIgnoreCase("") || strArray[1].equalsIgnoreCase("")){
+	                	System.out.println(strArray[0] + "-----" + strArray[1]);
+	                	ExceptionService.throwCodeException("翻译文件错误！filename = " + filename + "; " + strArray + ";");
+	                }
 	                map.put(strArray[0], strArray[1]);
 	            }
 	            line++;
@@ -107,6 +118,32 @@ public class TransFileEntity {
 	    return map;
 	}
 
+	public Map<String, String> getJsonKeyMapByJson(JSONObject jsonObject){
+	    Map<String, String> map = new HashMap<String, String>();
+	    if(jsonObject.containsKey("data")){
+	    	JSONObject json = jsonObject.getJSONObject("data");
+	    	InitJsonKeyMap(json, map);
+	    }
+		return map;
+	}
+	
+	private void InitJsonKeyMap(JSONObject jsonObject, Map<String, String> map){
+		Set<String> keys = jsonObject.keySet();
+		for(String key: keys) {
+			Object value = jsonObject.get(key);
+			if(value instanceof JSONObject){
+				InitJsonKeyMap((JSONObject)value, map);
+			}
+			else if(value instanceof String){
+				String val = (String)value;
+				map.put(key, val);
+			}
+			else{
+			    ExceptionService.throwCodeException("风险翻译不能识别该类型的节点");
+			}
+		}
+			
+	}
 	
 	public void setReqKey(String reqKey) {
 		this.reqKey = reqKey;
@@ -124,13 +161,13 @@ public class TransFileEntity {
 		return this.keyMap;
 	}
 
-	public void setReqType(ReqIntfEnums reqType) {
-		this.reqType = reqType;
-	}
-
-	public ReqIntfEnums getReqType() {
-		return reqType;
-	}
+//	public void setReqType(ReqIntfEnums reqType) {
+//		this.reqType = reqType;
+//	}
+//
+//	public ReqIntfEnums getReqType() {
+//		return reqType;
+//	}
 
 	public void setFilename(String filename) {
 		this.filename = filename;

@@ -23,6 +23,10 @@ public class LoggerAspect {
     @Pointcut("execution(public * com.icbc.efrs.app.controller.*.*(..))")
     public void log() {
     }
+    
+    public static void logInfo(String msg){
+    	logger.info(msg);
+    }
 
     @Before("log()")
     public void doBefore(JoinPoint joinPoint) {

@@ -18,7 +18,7 @@
     <url-pattern>/v2/api-docs</url-pattern>
   </servlet-mapping>
   <listener>
-    <listener-class>com.icbc.efrs.app.prop.AppServerProp</listener-class>
+    <listener-class>com.icbc.efrs.app.prop.ServerProp</listener-class>
   </listener>
   <filter>
     <filter-name>encodingFilter</filter-name>
