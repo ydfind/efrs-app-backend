@@ -27,6 +27,14 @@ public class LoggerAspect {
     public static void logInfo(String msg){
     	logger.info(msg);
     }
+    
+    public static void logWarn(String msg){
+    	logger.warn(msg);
+    }
+    
+    public static void logError(String msg){
+    	logger.error(msg);
+    }
 
     @Before("log()")
     public void doBefore(JoinPoint joinPoint) {

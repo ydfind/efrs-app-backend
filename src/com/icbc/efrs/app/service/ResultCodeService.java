@@ -1,11 +1,31 @@
 package com.icbc.efrs.app.service;
 
+import java.util.ArrayList;
+
 import com.alibaba.fastjson.JSONObject;
+import com.icbc.efrs.app.aspect.LoggerAspect;
+import com.icbc.efrs.app.constant.Constants;
 import com.icbc.efrs.app.domain.BaseAppResultEntity;
+import com.icbc.efrs.app.domain.ComplexAppResultEntity;
 
 public class ResultCodeService {
-
-	private static void processCodeNode(JSONObject source, JSONObject target) {
+	
+	public static boolean isSuccess(JSONObject root){
+		return root.getString("respCode").equals("success");
+	}
+	
+	public static boolean isSuccess(BaseAppResultEntity appResult, boolean ignoreNull){
+		if(appResult == null){
+			return false;
+		}
+		if(appResult.getJsonTarget() == null && ignoreNull){
+			return true;
+		}else{
+			return isSuccess(appResult.getJsonTarget());
+		}
+	}
+	
+	public static void processCodeNode(JSONObject source, JSONObject target) {
 		String code1 = "respCd";
 		String Errmsg = "";
 		String respCode = "";
@@ -13,6 +33,9 @@ public class ResultCodeService {
 		String code = "";
 		target.remove("code");
 		// 存在respCd，代表请求失败
+		// 1.存在"respCd"
+		// 若 = "0000"，则："respCd"、"respCode"、"Errmsg"
+		// 否则：                            "respCd"、"respCode"、"Errmsg"、"msg"
 		if (source.containsKey(code1)) {
 			code = source.getString("respCd");
 			// code="0000"
@@ -51,7 +74,7 @@ public class ResultCodeService {
 				} else {
 					Msg = source.getString("msg");
 				}
-				Errmsg = "没有查到满足条件的信息";
+				Errmsg = Constants.RES_QUERY_NO_INFO;
 				respCode = "failed";
 				target.put("CODE", code);
 				target.put("respCode", respCode);
@@ -69,7 +92,7 @@ public class ResultCodeService {
 					Msg = source.getString("msg");
 				}
 
-				Errmsg = "查询过程中出现异常";
+				Errmsg = Constants.RES_DEF_ERROR_DES;
 				respCode = "failed";
 				target.put("respCode", respCode);
 				target.put("Errmsg", Errmsg);
@@ -79,10 +102,30 @@ public class ResultCodeService {
 	}
 
 	public static void processCodeNode(BaseAppResultEntity appResult) {
-		// 
-		JSONObject jsonTarget = appResult.getJsonTarget();
-		JSONObject jsonSource = appResult.getJsonSource();
-		processCodeNode(jsonSource, jsonTarget);
+		if(appResult instanceof ComplexAppResultEntity){ 
+			ArrayList<BaseAppResultEntity> subResults = ((ComplexAppResultEntity)appResult).getSubResults();
+			for(int i = 0; i < subResults.size(); i++){
+				BaseAppResultEntity subResult = subResults.get(i);
+				JSONObject jsonSource = subResult.getJsonSource();
+				JSONObject jsonTarget = appResult.getJsonTarget();
+
+				// 默认以最后一个返回结果为准
+				processCodeNode(jsonSource, jsonTarget);
+				if(subResult == null || !subResult.isPcReqOK() || subResult.getJsonTData() == null){
+					LoggerAspect.logError("经营异常中存在PC请求失败的情况(null)");
+					break;
+				}
+				ResultCodeService.processCodeNode(subResult.getJsonSource(), appResult.getJsonTarget());
+				if(!ResultCodeService.isSuccess(appResult.getJsonTarget())){
+					LoggerAspect.logError("经营异常中存在pc请求失败的情况(Code解析为失败)");
+					break;
+				}
+			}
+		}else{
+			JSONObject jsonSource = appResult.getJsonSource();
+			JSONObject jsonTarget = appResult.getJsonTarget();
+			processCodeNode(jsonSource, jsonTarget);
+		}
 	}
 	// // 测试使用
 	// public static void main(String[] args){

@@ -9,19 +9,15 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.parser.Feature;
 import com.icbc.efrs.app.aspect.LoggerAspect;
-import com.icbc.efrs.app.domain.BaseServerReqEntity;
-import com.icbc.efrs.app.domain.TransFileEntity;
-import com.icbc.efrs.app.enums.ReqIntfEnums;
-import com.icbc.efrs.app.utils.FileUtil;
+import com.icbc.efrs.app.domain.*;
+import com.icbc.efrs.app.prop.PCServerUrlsProp;
 /**
- * 负责向PC发请求
+ * 向PC发请求，并返回结果
  *
  */
 public class PCPostService {
@@ -34,7 +30,7 @@ public class PCPostService {
 			}
 			obj = JSON.parseObject(result, Feature.OrderedField);
 		}else{
-			System.out.println("----PC端返回的结果为null，请求失败：getResultJson");
+			LoggerAspect.logWarn("----PC端返回的结果为null，请求失败：getResultJson");
 		}
 		return obj;
 	}
@@ -46,11 +42,11 @@ public class PCPostService {
 	 * @return 请求PC得到的结果：string类型
 	 */
 	public static String callHttpService(String url, String paramJson) {
-		System.out.println("请求的url：" + url);
-		System.out.println("请求的json为：" + paramJson);
+		LoggerAspect.logInfo("请求的url：" + url);
+		LoggerAspect.logInfo("请求的json为：" + paramJson);
 		String retStr = null;
 		int returnCode = 0;
-		int timeOut = 5000;
+		int timeOut = 2000;
 		HttpURLConnection connection = null;
 		ByteArrayOutputStream baos = null;
 		InputStream is = null;
@@ -89,11 +85,11 @@ public class PCPostService {
 				baos.flush();
 				String reponseStr = baos.toString("utf8");
 				retStr = reponseStr.toString();
-				System.out.println("收到的字符串为" + retStr);
+				LoggerAspect.logInfo("收到的字符串为" + retStr);
 			}else{
 				// 非200认为是异常
 				// 请在以下部分进行异常处理
-				System.out.println(returnCode+">>>>>"+connection.getResponseMessage());
+				LoggerAspect.logError(returnCode+">>>>>"+connection.getResponseMessage());
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -192,4 +188,67 @@ public class PCPostService {
 		}
 		return jsons;
 	}
+	
+	public static ArrayList<JSONObject> getPCResultJsons(ArrayList<BaseServerReqEntity> serverReqs){
+		if(serverReqs == null){
+			return null;
+		}
+		// 得到请求结果
+		ArrayList<String> urls = new ArrayList<String>();
+		ArrayList<String> paramJsons = new ArrayList<String>();
+		for(int i = 0; i < serverReqs.size(); i++){
+			BaseServerReqEntity serverReq = serverReqs.get(i);
+			// 构造请求的url、post参数
+			if(serverReq != null){
+				urls.add(serverReq.getPcReqUrl());
+				paramJsons.add(serverReq.getPCServerPost());
+			}else{
+				urls.add(null);
+				paramJsons.add(null);
+			}
+		}
+		return PCPostService.getPCResultJsons(urls, paramJsons);
+	}
+
+	public static String getPcResultStr(BaseServerReqEntity serverReq){
+	String result = null;
+	if(serverReq == null)
+		return result;
+	// body解析出请求类型，校验格式
+	String url = serverReq.getPcReqUrl();
+	String str = serverReq.getPCServerPost();
+	result = PCPostService.callHttpService(url, str);
+//	// DRD: 风险没有数据，先如此处理
+//	if(ReqJsonFilesProp.getReqIntfEnums(serverReq.getServiceKey()) == ReqIntfEnums.FXWithParam ||
+//			ReqJsonFilesProp.getReqIntfEnums(serverReq.getServiceKey()) == ReqIntfEnums.FXWithParams){
+//		LoggerAspect.logInfo("目前没有风险数据，先伪造部分数据");
+//		String content = FileUtil.getContent("D:/风险3.json");
+//		result = content;
+//	}
+	
+	if(result == null){
+		LoggerAspect.logWarn("----获取接口失败：getPcResultStr");
+	}
+	else{
+		result = BaseResultService.jsonParse(result);
+	}
+	return result;
+	}
+	
+	public static JSONObject getFXTransPCResultJson(BaseAppResultEntity appResult, BaseAppReqEntity appReq, String content){
+		JSONObject result = null;
+		String url = PCServerUrlsProp.getFengXianTransUrl();
+		String str = ServerReqService.parseFXTransPost(appResult, appReq, content);
+		if(str == null || str.equals("")){
+			LoggerAspect.logWarn("获取风险翻译失败0！");
+		}else{
+			result = PCPostService.getHttpServiceJson(url, str);
+			if(result == null){
+				// DRD: 后续翻译失败，需返回前端请求失败
+				ExceptionService.throwCodeException("----获取接口失败：getFXTransPCResultJson");
+			}
+		}
+		return result;
+	}
+	
 }

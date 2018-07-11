@@ -6,13 +6,13 @@ import java.util.Set;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.icbc.efrs.app.aspect.LoggerAspect;
 import com.icbc.efrs.app.domain.BaseAppReqEntity;
 import com.icbc.efrs.app.domain.BaseAppResultEntity;
-import com.icbc.efrs.app.domain.BaseServerReqEntity;
+import com.icbc.efrs.app.domain.ComplexAppResultEntity;
 import com.icbc.efrs.app.domain.TransFileEntity;
 import com.icbc.efrs.app.enums.ReqIntfEnums;
 import com.icbc.efrs.app.prop.TransFilesProp;
-import com.icbc.efrs.app.utils.JSONUtil;
 
 /**
  * 对PC返回结果，进行翻译
@@ -26,10 +26,10 @@ public class ResultTransService {
     			serviceKey == null || serviceKey.equals(""))
     		return;
     	Map<String, String> fileMap = getTransMap(appResult, appReq, type, serviceKey);
-	    if(fileMap != null)
+    	
+	    if(fileMap != null){
 	    	transJsonKeys(appResult.getJsonTData(), fileMap);
-    	else
-    		System.out.println("warning：无法找到翻译文件，将不进行翻译！");
+	    }
     }
     
     private static Map<String, String> getTransMap(BaseAppResultEntity appResult, BaseAppReqEntity appReq, ReqIntfEnums type, String serviceKey){
@@ -40,12 +40,14 @@ public class ResultTransService {
 		case ZhongShu:
 		case CompanyReport:
 		case ZSWithParamNoPaged:
+		case PatentInfo:
+		case ZSWithParam:
 			if(TransFilesProp.getFileMap().containsKey(serviceKey)){
 	    	    TransFileEntity objFile = TransFilesProp.getTransFileEntity(serviceKey);
 		    	if(objFile != null)
 		    		result = objFile.getKeyMap();
 	    	}else{
-	    		System.out.println("warning：无法找到翻译文件，将不进行翻译！");
+	    		LoggerAspect.logWarn("无法找到翻译文件，将不进行翻译！");
 	    	}
 			break;
 		case FXWithParam:
@@ -53,6 +55,16 @@ public class ResultTransService {
 			TransFileEntity objFile = TransFilesProp.getFXTransFileEntity(appResult, appReq);
 	    	if(objFile != null)
 	    		result = objFile.getKeyMap();
+			break;
+		case AbnormalManage:
+		case QualityCertification:
+		case TeleFraud:
+		case TaxIllegal:
+			if(appResult instanceof ComplexAppResultEntity){
+	    		result = TransFilesProp.getComplexTransMap((ComplexAppResultEntity)appResult, appReq);
+	    	}else{
+	    		ExceptionService.throwCodeException("报错：经营异常结果非复杂类型");
+	    	}
 			break;
 		default: 
 			ExceptionService.throwCodeException("无法识别此接口类型的翻译map");

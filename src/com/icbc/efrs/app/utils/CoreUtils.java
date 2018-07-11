@@ -38,10 +38,10 @@ import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.icbc.efrs.app.constant.Constants;
+
 
 public class CoreUtils {
-	
-	public static final String ENCODING_DEF = "UTF-8";
 
     /**
      * 连续字符生成，例如in语句的连续问号生成
@@ -2405,7 +2405,7 @@ public class CoreUtils {
             return del;
         } else {
             try {
-                return URLDecoder.decode(str, ENCODING_DEF);
+                return URLDecoder.decode(str, Constants.ENCODING_DEF);
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             }

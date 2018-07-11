@@ -7,7 +7,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.icbc.efrs.app.enums.ReqIntfEnums;
 import com.icbc.efrs.app.prop.ReqJsonFilesProp;
 import com.icbc.efrs.app.prop.ServerProp;
-import com.icbc.efrs.app.service.ExceptionService;
 /*
  * App服务器端请求PC的类
  */

@@ -29,9 +29,15 @@ public class PCServerUrlsProp {
 		case ZhongShu:
 		case CompanyReport:
 		case ZSWithParamNoPaged:
+		case ZSWithParam:
+		case PatentInfo:
 			result = "http://" + urlIP + 
 			  "/icbc/cocoa/json/com.icbc.efrs.dsf.chinadaas.CdDataService/1.1/getCdDataService";
 			break;
+//		case AbnormalManage:
+//		case QualityCertification:
+//      case TeleFraud:
+//		case TaxIllegal:
 		default:
 			ExceptionService.throwCodeException("无法取得该接口类型对应的PC端url地址");
 		}	

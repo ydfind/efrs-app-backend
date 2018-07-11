@@ -1,23 +1,12 @@
 package com.icbc.efrs.app.domain;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.icbc.efrs.app.enums.ReqIntfEnums;
-import com.icbc.efrs.app.prop.ReqJsonFilesProp;
-import com.icbc.efrs.app.utils.JSONUtil;
 
 /*
  * App请求类
  */
 public class BaseAppReqEntity {
-	public static final String NAME_BANKID = new String("bankId");
-	public static final String NAME_USERID = new String("userId");
-	public static final String NAME_PAGE = new String("page");
-	public static final String NAME_SIZE = new String("size");
-	public static final String NAME_KEY = new String("key");
-	public static final Integer DEF_PAGE = 1;
-	public static final Integer DEF_SIZE = 10;
-	public static final String NAME_ZS_ZMXX = new String("照面信息");
 	private int page;     // 请求的页码
 	private int size;     // 每页的数量
 	private String bankId;

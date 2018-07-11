@@ -12,7 +12,6 @@ import java.util.Map.Entry;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.icbc.efrs.app.domain.BaseAppResultEntity;
-import com.icbc.efrs.app.domain.BaseServerReqEntity;
 import com.icbc.efrs.app.domain.ReqJsonFileEntity;
 import com.icbc.efrs.app.prop.ReqJsonFilesProp;
 /**
@@ -89,17 +88,17 @@ public class ResultTopService {
 					}
 				});
 //				if(level == 2){
-//					System.out.println(level + "-----start------------------------------");
+//					LoggerAspect.logInfo(level + "-----start------------------------------");
 //				}
 				for(Map.Entry<String, Object> entry: list){
 					objLinked.remove(entry.getKey());
 					objLinked.put(entry.getKey(), entry.getValue());
 //					if(level == 2){
-//						System.out.println(level + "-----aaaa---------" +entry.getKey() + "---------------------");
+//						LoggerAspect.logInfo(level + "-----aaaa---------" +entry.getKey() + "---------------------");
 //					}
 				}
 //				if(level == 2){
-//					System.out.println(level + "-----end------------------------------");
+//					LoggerAspect.logInfo(level + "-----end------------------------------");
 //				}
 				
 			}else{

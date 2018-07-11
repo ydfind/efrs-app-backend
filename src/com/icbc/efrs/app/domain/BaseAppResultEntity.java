@@ -1,6 +1,5 @@
 package com.icbc.efrs.app.domain;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.icbc.efrs.app.service.ExceptionService;
@@ -9,8 +8,6 @@ import com.icbc.efrs.app.service.ExceptionService;
  */
 public class BaseAppResultEntity {
 	/* 分页时默认从1开始   */
-	public static final Integer DEF_START_PAGE = 1;
-	public static final String NAME_DATA = new String("data");
 	private JSONObject jsonSource;// pc返回的原jsonSource节点
 	private JSONObject jsonTarget;// 将返回给App端的jsonSource节点
 	private String code;// 后端返回的成功吗
@@ -24,7 +21,16 @@ public class BaseAppResultEntity {
 	
 	public BaseAppResultEntity() {
 		listtype = 0;
+		code = "";
+		msg = "";
+		totalpage = 0;
+		totalnum = 0;
+		jsonTarget = null;
 		jsonSource = null;
+		jsonSData = null;
+		jsonTData = null;
+		listtype = 0;
+		pcReqOK = false;
 	}
 	
 	public BaseAppResultEntity(JSONObject objJson) {

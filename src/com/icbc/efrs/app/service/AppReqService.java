@@ -3,13 +3,13 @@ package com.icbc.efrs.app.service;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.parser.Feature;
+import com.icbc.efrs.app.constant.Constants;
 import com.icbc.efrs.app.domain.*;
 import com.icbc.efrs.app.enums.ReqIntfEnums;
 import com.icbc.efrs.app.prop.ReqJsonFilesProp;
 import com.icbc.efrs.app.utils.JSONUtil;
 /**
- * 构建APP请求对象
- * @author kfzx-dengrd
+ * 解析APP请求
  *
  */
 public class AppReqService {
@@ -21,31 +21,37 @@ public class AppReqService {
 		String key = "";
 		String bankId = "";
 		String userId = "";
-		page = JSONUtil.getSubNodeInt(objJson, BaseAppReqEntity.NAME_PAGE, BaseAppReqEntity.DEF_PAGE);
-		size = JSONUtil.getSubNodeInt(objJson, BaseAppReqEntity.NAME_SIZE, BaseAppReqEntity.DEF_SIZE);
-		key = JSONUtil.getStringByKey(objJson, BaseAppReqEntity.NAME_KEY);
-		bankId = JSONUtil.getStringByKey(objJson, BaseAppReqEntity.NAME_BANKID);
-		userId = JSONUtil.getStringByKey(objJson, BaseAppReqEntity.NAME_USERID);
+		page = JSONUtil.getSubNodeInt(objJson, Constants.REQ_NAME_PAGE, Constants.REQ_DEF_PAGE);
+		size = JSONUtil.getSubNodeInt(objJson, Constants.REQ_NAME_SIZE, Constants.REQ_DEF_SIZE);
+		key = JSONUtil.getStringByKey(objJson, Constants.REQ_NAME_KEY);
+		bankId = JSONUtil.getStringByKey(objJson, Constants.REQ_NAME_BANKID);
+		userId = JSONUtil.getStringByKey(objJson, Constants.REQ_NAME_USERID);
 		switch(obj.getIntfType()){
 		case FaHai:
+		case AbnormalManage:
+		case QualityCertification:
+		case TeleFraud:
+		case TaxIllegal:
 			break;
 		case FuzzyQuery:
-			page = JSONUtil.getSubNodeInt(objJson, "reqParams.page", BaseAppReqEntity.DEF_PAGE);
-			size = JSONUtil.getSubNodeInt(objJson, "reqParams.size", BaseAppReqEntity.DEF_SIZE);
+			page = JSONUtil.getSubNodeInt(objJson, "reqParams.page", Constants.REQ_DEF_PAGE);
+			size = JSONUtil.getSubNodeInt(objJson, "reqParams.size", Constants.REQ_DEF_SIZE);
 			break;
 		case FXWithParam:
 		case FXWithParams:
 			// 风险需自行分页
-			objJson.remove(BaseAppReqEntity.NAME_PAGE);
-			objJson.remove(BaseAppReqEntity.NAME_SIZE);
+			objJson.remove(Constants.REQ_NAME_PAGE);
+			objJson.remove(Constants.REQ_NAME_SIZE);
 			// 风险需要读取key，然后构建："data": {"accNo": "中国工商银行32"}
-			objJson.remove(BaseAppReqEntity.NAME_KEY);
+			objJson.remove(Constants.REQ_NAME_KEY);
 			break;
 		case CompanyQuery:
 			break;
 		case CompanyReport:
 		case ZSWithParamNoPaged:
+		case ZSWithParam:
 		case ZhongShu:
+		case PatentInfo:
 			break;
 		default:// 
 			ExceptionService.throwCodeException("无法识别此接口类型0");
@@ -64,6 +70,12 @@ public class AppReqService {
 		case ZhongShu:
 		case CompanyReport:
 		case ZSWithParamNoPaged:
+		case ZSWithParam:
+		case PatentInfo:
+		case AbnormalManage:
+		case QualityCertification:
+		case TeleFraud:
+		case TaxIllegal:
 			obj = new BaseAppReqEntity();
 			break;
 		case FuzzyQuery:
@@ -105,7 +117,7 @@ public class AppReqService {
 //			// 进行其它特殊的初始化
 //			// 该节点不需要
 		}catch(Exception e){
-			e.printStackTrace();
+			ExceptionService.throwCodeException("解析请求post的string失败！");
 			obj = null;
 		}
 		return obj;

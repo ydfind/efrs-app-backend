@@ -7,9 +7,6 @@ import java.util.Set;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.icbc.efrs.app.domain.BaseAppResultEntity;
-import com.icbc.efrs.app.domain.BaseServerReqEntity;
-import com.icbc.efrs.app.domain.ReqJsonFileEntity;
-import com.icbc.efrs.app.prop.ReqJsonFilesProp;
 /**
  * 对PC返回结果，对于约定不需要显示的字段，进行删除处理
  * @author kfzx-dengrd

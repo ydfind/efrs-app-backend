@@ -17,6 +17,9 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 
+import com.icbc.efrs.app.aspect.LoggerAspect;
+import com.icbc.efrs.app.constant.Constants;
+
 public class FileUtil {
 
     /**
@@ -223,7 +226,7 @@ public class FileUtil {
         String line;
         try {
             BufferedReader bfr = new BufferedReader(new InputStreamReader(
-                    new FileInputStream(filepath), CoreUtils.ENCODING_DEF));
+                    new FileInputStream(filepath), Constants.ENCODING_DEF));
             while ((line = bfr.readLine()) != null) {
                 if (!line.startsWith("#")) {
                     sb.append(line).append("\n");
@@ -249,7 +252,7 @@ public class FileUtil {
         String line;
         try {
             BufferedReader bfr = new BufferedReader(new InputStreamReader(
-                    new FileInputStream(filepath), CoreUtils.ENCODING_DEF));
+                    new FileInputStream(filepath), Constants.ENCODING_DEF));
             while ((line = bfr.readLine()) != null) {
                 line = line.trim();
                 if (!line.startsWith("#")) {
@@ -271,9 +274,13 @@ public class FileUtil {
     public static ArrayList<String> getFilesEndWith(String filepath, String endStr) {
         ArrayList<String> retList = new ArrayList<String>();
         File f = new File(filepath);
-        String[] filenames = f.list(getFileExtensionFilter(endStr));
-        for(int i = 0; i < filenames.length; i++){
-        	retList.add(filenames[i]);
+        if(f.isDirectory()){
+	        String[] filenames = f.list(getFileExtensionFilter(endStr));
+	        for(int i = 0; i < filenames.length; i++){
+	        	retList.add(filenames[i]);
+	        }
+        }else{
+        	LoggerAspect.logError("error: " + filepath + "不是目录或不存在");
         }
         return retList;
     }
